@@ -36,6 +36,9 @@ try {
     Initialize-RunbookVault 'C:\ProgramData\TSMA\Config\Vault-OperationDirectory.json'
     $health=Test-RunbookVault -Reference OperationDirectory
     if($health.PasswordAgeLimitSeconds -ne $policy.MaximumPasswordAgeSeconds){throw 'DIRECTORY_POLICY_INVALID'}
+    $policyMargin=2100
+    if($null -ne $policy.PSObject.Properties['MinimumRemainingLifetimeSeconds']){$policyMargin=$policy.MinimumRemainingLifetimeSeconds}
+    if($health.MinimumRemainingLifetimeSeconds -ne $policyMargin){throw 'DIRECTORY_POLICY_INVALID'}
     $credential=Get-RunbookCredential -Reference OperationDirectory
     $stage='Operation'
     Invoke-DirectoryGroupMember -UserName $UserName -GroupName $GroupName -ChangeReference $ChangeReference -Preview $Preview -Credential $credential -Policy $policy -LastRotationUtc ([DateTimeOffset]::Parse($health.LastRotationUtc)) -AzureJobId $jobContext.AzureJobId -AzureJobIdSource $jobContext.AzureJobIdSource -JobCorrelationStatus $jobContext.JobCorrelationStatus
@@ -50,6 +53,8 @@ try {
         $outcome=if($exception.Data['DirectoryOutcome'] -eq 'RecoveryRequired'){'RecoveryRequired'}else{'RejectedBeforeWrite'}
     } elseif($exception.Message -match '^DIRECTORY_[A-Z_]+$') {
         $detail=Get-DirectoryFailureDetail -Code $exception.Message
+    } elseif($exception.Message -eq 'RUNBOOK_VAULT_ROTATION_ADMISSION_DENIED') {
+        $detail=Get-DirectoryFailureDetail -Code DIRECTORY_ROTATION_ADMISSION_DENIED
     } elseif($stage -eq 'Vault') {
         $detail=Get-DirectoryFailureDetail -Code DIRECTORY_VAULT_UNAVAILABLE
     } elseif($stage -eq 'Policy') {

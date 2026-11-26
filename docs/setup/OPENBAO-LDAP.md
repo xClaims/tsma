@@ -79,13 +79,15 @@ Expect the correct URL, schema, base and attribute; do not publish the full resp
 First confirm the actual execution DN with Get-ADUser on your management host. In the authorized bao shell, create the role once:
 
 ~~~sh
-bao write ldap-operation/static-role/operation-directory dn='CN=svc-op-directory,OU=Service Accounts,OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com' username='svc-op-directory' rotation_period=4h
+bao write ldap-operation/static-role/operation-directory dn='CN=svc-op-directory,OU=Service Accounts,OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com' username='svc-op-directory' rotation_period=24h
 bao read ldap-operation/static-role/operation-directory
 ~~~
 
-Initial creation can immediately change the AD password. Do not manage an account currently used by unrelated services. Expect username, correct dn, rotation_period=4h and a recent last_vault_rotation. Never run bao read ldap-operation/static-cred/operation-directory in a recorded terminal: it returns the password. TSMA retrieves it in memory during later probes.
+Initial creation can immediately change the AD password. Do not manage an account currently used by unrelated services. Expect username, correct dn, rotation_period=24h and a recent last_vault_rotation. Never run bao read ldap-operation/static-cred/operation-directory in a recorded terminal: it returns the password. TSMA retrieves it in memory during later probes.
 
 Record last_vault_rotation and later observe it advance after the independent interval without a manual rotation. Keep the vault running, unsealed and time-synchronized. A successful manual rotate-role call does not validate the timer. Reconciliation failure requires an administrator to inspect bind expiry, permissions, policy, TLS and account identity.
+
+Existing installations must use the [coordinated maintenance procedure](../CREDENTIAL-ROTATION.md) to migrate their interval and local safeguards; changing the example does not update a live role.
 
 ## 4. Troubleshooting
 

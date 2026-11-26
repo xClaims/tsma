@@ -34,7 +34,7 @@ OpenBao owns the AD password. TSMA retrieves a fresh credential for each job and
 
 Confirm independent scheduled rotation by recording last_vault_rotation before and after the configured period while no manual rotation is requested. Verify fresh read-only AD authentication after rotation. Do not disable freshness checks to work around drift or a sealed vault. Check UTC on the Hyper-V host, worker, DC and vault host after suspension/resume.
 
-The current implementation does not implement coordinated maximum-age-plus-drain. For a controlled manual rotation, pause and drain every consumer first; use a separately authorized vault administrator. Avoid long-running jobs sharing a rotating password. Password changes do not terminate existing authenticated sessions reliably.
+The default is 24-hour automatic rotation with a 35-minute admission margin. TSMA checks the margin before retrieval and immediately before a directory write; it does not delay the vault timer for active jobs. See [credential rotation and migration](CREDENTIAL-ROTATION.md) for protected configuration updates, monitoring and recovery. For a controlled manual rotation, pause and drain every consumer first; use a separately authorized vault administrator. Password changes do not reliably terminate existing sessions.
 
 ## RecoveryRequired or retained lock
 

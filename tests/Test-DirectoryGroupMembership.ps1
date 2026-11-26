@@ -18,7 +18,7 @@ $secret=[Security.SecureString]::new()
 foreach($character in 'OFFLINE-ONLY'.ToCharArray()){$secret.AppendChar($character)}
 $secret.MakeReadOnly()
 $credential=[pscredential]::new('EXAMPLE\svc-op-directory',$secret)
-$policy=[pscustomobject]@{ExecutionIdentity='EXAMPLE\svc-op-directory';DomainDistinguishedName='DC=ad,DC=example,DC=com';Tier0DistinguishedName='OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com';MaximumPasswordAgeSeconds=14400;DomainController='dc01.ad.example.com';DomainSid='S-1-5-21-1-2-3';EvidenceDirectory='C:\ProgramData\TSMA\Evidence\GroupMembership';ExcludedOuGuids=@('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222');ProtectedObjectGuids=@();ScopeReviewReference='REVIEW-1';ReviewExpiresUtc=[DateTimeOffset]::UtcNow.AddDays(1).ToString('o');WritesEnabled=$true}
+$policy=[pscustomobject]@{ExecutionIdentity='EXAMPLE\svc-op-directory';DomainDistinguishedName='DC=ad,DC=example,DC=com';Tier0DistinguishedName='OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com';MaximumPasswordAgeSeconds=86400;DomainController='dc01.ad.example.com';DomainSid='S-1-5-21-1-2-3';EvidenceDirectory='C:\ProgramData\TSMA\Evidence\GroupMembership';ExcludedOuGuids=@('11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222');ProtectedObjectGuids=@();ScopeReviewReference='REVIEW-1';ReviewExpiresUtc=[DateTimeOffset]::UtcNow.AddDays(1).ToString('o');WritesEnabled=$true}
 try {
     & $module {
         $script:State=@{Mode='Success';Writes=0;Reads=0;Records=0;Kept=$false}
@@ -57,8 +57,11 @@ try {
         elseif($mode -in @('Reject','Disabled','Evidence')){Assert-Case ($message -like 'DIRECTORY_OPERATION_REJECTEDBEFOREWRITE*' -and $state.Writes -eq 0 -and -not $state.Kept) $mode}
         else {$expected=if($mode -eq 'Success'){'VerifiedSuccess'}elseif($mode -eq 'Already'){'AlreadyMember'}else{'Preview'};Assert-Case ($result.Outcome -eq $expected -and $state.Writes -eq [int]($mode -eq 'Success') -and -not $state.Kept) $mode}
     }
-    $message='';try{Invoke-DirectoryGroupMember -UserName ordinary-user -GroupName ordinary-group -ChangeReference CHG-2 -Preview $false -Credential $credential -Policy $policy -LastRotationUtc ([DateTimeOffset]::UtcNow.AddHours(-4))}catch{$message=$_.Exception.Message}
+    $message='';try{Invoke-DirectoryGroupMember -UserName ordinary-user -GroupName ordinary-group -ChangeReference CHG-2 -Preview $false -Credential $credential -Policy $policy -LastRotationUtc ([DateTimeOffset]::UtcNow.AddHours(-24))}catch{$message=$_.Exception.Message}
     Assert-Case ($message -eq 'DIRECTORY_ROTATION_ADMISSION_DENIED') 'Rotation cutoff'
+    & $module {$script:State=@{Mode='Success';Writes=0;Reads=0;Records=0;Kept=$false}}
+    $message='';try{Invoke-DirectoryGroupMember -UserName ordinary-user -GroupName ordinary-group -ChangeReference CHG-MARGIN -Preview $false -Credential $credential -Policy $policy -LastRotationUtc ([DateTimeOffset]::UtcNow.AddHours(-23.5))}catch{$message=$_.Exception.Message}
+    Assert-Case ($message -eq 'DIRECTORY_ROTATION_ADMISSION_DENIED' -and (& $module {$script:State.Writes + $script:State.Reads}) -eq 0) '35-minute margin rejects before AD work'
     $policy.WritesEnabled=$false
     $message='';try{Invoke-DirectoryGroupMember -UserName ordinary-user -GroupName ordinary-group -ChangeReference CHG-3 -Preview $false -Credential $credential -Policy $policy -LastRotationUtc ([DateTimeOffset]::UtcNow.AddMinutes(-1))}catch{$message=$_.Exception.Message}
     Assert-Case ($message -eq 'DIRECTORY_WRITES_NOT_ENABLED') 'Write release gate'

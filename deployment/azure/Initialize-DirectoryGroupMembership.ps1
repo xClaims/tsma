@@ -15,9 +15,11 @@ param([Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._/ -]{0,63}
     [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9.-]+\.[A-Za-z0-9-]+$')][string]$DomainController,
     [Parameter(Mandatory)][string]$Tier0DistinguishedName,
     [Parameter(Mandatory)][string]$ExecutionAccount,
-    [ValidateRange(600,604800)][int]$MaximumPasswordAgeSeconds=14400)
+    [ValidateRange(600,604800)][int]$MaximumPasswordAgeSeconds=86400,
+    [ValidateRange(300,86400)][int]$MinimumRemainingLifetimeSeconds=2100)
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+if($MinimumRemainingLifetimeSeconds -ge $MaximumPasswordAgeSeconds){throw 'Rotation admission margin must be shorter than the interval.'}
 $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
 if(-not ([Security.Principal.WindowsPrincipal]::new($identity)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){throw 'Elevation required.'}
 Import-Module ActiveDirectory -ErrorAction Stop
@@ -57,7 +59,7 @@ if(-not [Diagnostics.EventLog]::SourceExists('TSMA')) {
     [Diagnostics.EventLog]::CreateEventSource('TSMA','Application')
 } elseif([Diagnostics.EventLog]::LogNameFromSourceName('TSMA','.') -ne 'Application'){throw 'Event source exists in a different log.'}
 $policy=[ordered]@{
-    ExecutionIdentity=($domain.NetBIOSName+'\'+$account.SamAccountName);DomainDistinguishedName=$domain.DistinguishedName;Tier0DistinguishedName=$Tier0DistinguishedName;MaximumPasswordAgeSeconds=$MaximumPasswordAgeSeconds
+    ExecutionIdentity=($domain.NetBIOSName+'\'+$account.SamAccountName);DomainDistinguishedName=$domain.DistinguishedName;Tier0DistinguishedName=$Tier0DistinguishedName;MaximumPasswordAgeSeconds=$MaximumPasswordAgeSeconds;MinimumRemainingLifetimeSeconds=$MinimumRemainingLifetimeSeconds
     DomainController=$DomainController;DomainSid=$domain.DomainSID.ToString();ExcludedOuGuids=@($roots)
     ProtectedObjectGuids=@($account.ObjectGUID.ToString())+@($AdditionalProtectedObjectGuids | ForEach-Object {$_.ToString()})
     ScopeReviewReference=$ScopeReviewReference;ReviewExpiresUtc=[DateTimeOffset]::UtcNow.AddDays($ReviewDays).ToString('o')

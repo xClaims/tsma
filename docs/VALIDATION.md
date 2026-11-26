@@ -21,7 +21,7 @@ PSScriptAnalyzer is an additional static check. No fixtures contain real credent
 3. Confirm managed identity matches the exact JWT oid binding, with correct issuer, tenant, role, audience and signature validation.
 4. Run access, authorization and LDAPS probes. Expect exact read capabilities and HTTP403 for actual denied GETs; an empty or unavailable response is not a passing denial test.
 5. Run isolated JWT wrong audience/tenant/identity/issuer and altered-signature checks. Never weaken the production role for a test.
-6. Observe a scheduled password rotation across the configured interval without manually rotating, then verify fresh AD authentication. Record both timestamps and job output.
+6. Observe a scheduled password rotation across the configured interval without manually rotating, then verify fresh AD authentication. Record both timestamps and job output. Validate the 35-minute admission blackout separately; metadata-only monitoring should remain healthy while credential admission is false. See [rotation acceptance](CREDENTIAL-ROTATION.md).
 7. Preview an eligible user/group. Confirm no AD write and review evidence.
 8. Reject a disabled user, protected privileged group, Tier 0 object, Domain Controllers object, foreign identity, expired review and disabled-write request. Keep these tests in an authorized environment; do not move or weaken real privileged assets to construct fixtures.
 9. Open writes only after approval; add one authorized membership, independently verify, then repeat to prove AlreadyMember/no mutation.

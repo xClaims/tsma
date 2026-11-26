@@ -99,11 +99,11 @@ bao read auth/jwt-arc/role/operation-directory-worker01
 bao policy read operation-directory-worker
 ~~~
 
-Do not overwrite an established mount's issuer blindly. The worker policy permits only metadata and credentials for ldap-operation/static-role/operation-directory and ldap-operation/static-cred/operation-directory, plus sys/capabilities-self update. No root/default policy, other-account access, password rotation, auth configuration or policy management is granted. The five-minute token expires independently of the four-hour AD password timer.
+Do not overwrite an established mount's issuer blindly. The worker policy permits only metadata and credentials for ldap-operation/static-role/operation-directory and ldap-operation/static-cred/operation-directory, plus sys/capabilities-self update. No root/default policy, other-account access, password rotation, auth configuration or policy management is granted. The five-minute token expires independently of the 24-hour AD password timer.
 
 ## 5. Prepare the worker's provider configuration
 
-Copy examples/OperationDirectory.example.json to C:\SecureConfig\OperationDirectory.json on the worker. Replace Address, ManagedIdentityResource (api://<actual-client-id>), account UserName/CredentialUserName/DistinguishedName, and any deliberately renamed role/mount values. Keep JwtRole=operation-directory-worker01 for the supplied code-owned probes. This is a role label, not a requirement that your actual host be named WORKER01; the oid binding pins your actual machine. MaximumPasswordAgeSeconds=14400 corresponds to the four-hour static role.
+Copy examples/OperationDirectory.example.json to C:\SecureConfig\OperationDirectory.json on the worker. Replace Address, ManagedIdentityResource (api://<actual-client-id>), account UserName/CredentialUserName/DistinguishedName, and any deliberately renamed role/mount values. Keep JwtRole=operation-directory-worker01 for the supplied code-owned probes. This is a role label, not a requirement that your actual host be named WORKER01; the oid binding pins your actual machine. MaximumPasswordAgeSeconds=86400 corresponds to the 24-hour static role. MinimumRemainingLifetimeSeconds=2100 requires more than 35 minutes remaining before credential use.
 
 The workstation and worker are separate machines: transfer this nonsecret configuration deliberately; creating it on one does not create it on the other. The worker needs no administrator token, reconciliation password or SecretID. Install this file through [the protected worker procedure](../INSTALL.md).
 

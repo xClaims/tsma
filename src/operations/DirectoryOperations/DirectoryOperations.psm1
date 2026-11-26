@@ -208,7 +208,10 @@ function Invoke-DirectoryGroupMember {
     if($Policy.WritesEnabled -isnot [bool]){throw 'DIRECTORY_POLICY_INVALID'}
     if(-not $Preview -and -not $Policy.WritesEnabled){throw 'DIRECTORY_WRITES_NOT_ENABLED'}
     if(($Policy.MaximumPasswordAgeSeconds -isnot [int] -and $Policy.MaximumPasswordAgeSeconds -isnot [long]) -or $Policy.MaximumPasswordAgeSeconds -lt 600 -or $Policy.MaximumPasswordAgeSeconds -gt 604800){throw 'DIRECTORY_POLICY_INVALID'}
-    if($LastRotationUtc -gt [DateTimeOffset]::UtcNow -or $LastRotationUtc.AddSeconds($Policy.MaximumPasswordAgeSeconds) -le [DateTimeOffset]::UtcNow.AddMinutes(5)){throw 'DIRECTORY_ROTATION_ADMISSION_DENIED'}
+    $margin=2100
+    if($null -ne $Policy.PSObject.Properties['MinimumRemainingLifetimeSeconds']){$margin=$Policy.MinimumRemainingLifetimeSeconds}
+    if(($margin -isnot [int] -and $margin -isnot [long]) -or $margin -lt 300 -or $margin -ge $Policy.MaximumPasswordAgeSeconds){throw 'DIRECTORY_POLICY_INVALID'}
+    if($LastRotationUtc -gt [DateTimeOffset]::UtcNow -or $LastRotationUtc.AddSeconds($Policy.MaximumPasswordAgeSeconds) -le [DateTimeOffset]::UtcNow.AddSeconds($margin)){throw 'DIRECTORY_ROTATION_ADMISSION_DENIED'}
     # Resolve both required exclusion roots and pin them to policy GUIDs before admission.
     if($Policy.DomainDistinguishedName -notmatch '^(DC=[A-Za-z0-9-]+,)+DC=[A-Za-z0-9-]+$' -or
         [string]::IsNullOrWhiteSpace($Policy.Tier0DistinguishedName) -or
@@ -245,7 +248,7 @@ function Invoke-DirectoryGroupMember {
             $snapshot=Get-DirectoryMembershipSnapshot -Policy $Policy -GroupObjectGuid $GroupObjectGuid -MemberObjectGuid $MemberObjectGuid -Credential $Credential
             if($snapshot.DirectMember){$record.State='AlreadyMember';$completed=$true}
             else {
-                if($LastRotationUtc.AddSeconds($Policy.MaximumPasswordAgeSeconds) -le [DateTimeOffset]::UtcNow.AddMinutes(5)){throw 'DIRECTORY_ROTATION_ADMISSION_DENIED'}
+                if($LastRotationUtc.AddSeconds($Policy.MaximumPasswordAgeSeconds) -le [DateTimeOffset]::UtcNow.AddSeconds($margin)){throw 'DIRECTORY_ROTATION_ADMISSION_DENIED'}
                 $record.State='WritePending';$record.MutationAttempted=$true
                 Write-DirectoryOperationRecord -Path $recordPath -Record $record
                 $attempted=$true

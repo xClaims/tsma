@@ -18,6 +18,9 @@ function Initialize-RunbookVault {
         if ($c.TimeoutSeconds -lt 1 -or $c.TimeoutSeconds -gt 60 -or $c.MaximumPasswordAgeSeconds -lt 60 -or $c.MaximumPasswordAgeSeconds -gt 604800) { throw 'invalid' }
         if($c.Authentication -ne 'ArcManagedIdentity' -or $c.JwtRole -notmatch '^[\w-]+$' -or
             $c.ManagedIdentityResource -notmatch '^api://[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'){throw 'invalid'}
+        # Older configurations inherit the conservative 35-minute admission margin.
+        if($null -eq $c.PSObject.Properties['MinimumRemainingLifetimeSeconds']){$c | Add-Member NoteProperty MinimumRemainingLifetimeSeconds 2100}
+        if(($c.MinimumRemainingLifetimeSeconds -isnot [int] -and $c.MinimumRemainingLifetimeSeconds -isnot [long]) -or $c.MinimumRemainingLifetimeSeconds -lt 300 -or $c.MinimumRemainingLifetimeSeconds -ge $c.MaximumPasswordAgeSeconds){throw 'invalid'}
         foreach($a in $c.Accounts.PSObject.Properties) {
             if ($a.Name -notmatch '^[\w-]+$' -or $a.Value.Role -notmatch '^[\w-]+$' -or [string]::IsNullOrWhiteSpace($a.Value.UserName) -or [string]::IsNullOrWhiteSpace($a.Value.CredentialUserName) -or [string]::IsNullOrWhiteSpace($a.Value.DistinguishedName)) { throw 'invalid' }
         }
@@ -80,12 +83,15 @@ function Test-RunbookVault {
         if($r.data.username -cne $a.UserName -or $r.data.dn -ine $a.DistinguishedName){throw 'invalid'}
         $period=[string]$r.data.rotation_period
         $expected=[int]$script:Vault.Config.MaximumPasswordAgeSeconds
-        if($period -ne [string]$expected -and $period -ne ($expected.ToString()+'s') -and -not ($expected -eq 14400 -and $period -eq '4h')){throw 'invalid'}
+        if($period -notmatch '^(\d+)([smhd]?)$'){throw 'invalid'}
+        $multiplier=switch($Matches[2]){'m'{60};'h'{3600};'d'{86400};default{1}}
+        if(([decimal]$Matches[1]*$multiplier) -ne $expected){throw 'invalid'}
         $last=[DateTimeOffset]::Parse($r.data.last_vault_rotation).ToUniversalTime()
     } catch {throw 'RUNBOOK_VAULT_METADATA_INVALID'}
     Wait-RotationTimestamp $last
     if([DateTimeOffset]::UtcNow -ge $last.AddSeconds($expected)){throw 'RUNBOOK_VAULT_ROTATION_OVERDUE'}
-    [pscustomobject]@{Reference=$Reference;Healthy=$true;LastRotationUtc=$last.ToString('o');PasswordAgeLimitSeconds=$expected}
+    $remaining=($last.AddSeconds($expected)-[DateTimeOffset]::UtcNow).TotalSeconds
+    [pscustomobject]@{Reference=$Reference;Healthy=$true;LastRotationUtc=$last.ToString('o');NextRotationUtc=$last.AddSeconds($expected).ToString('o');PasswordAgeLimitSeconds=$expected;MinimumRemainingLifetimeSeconds=[int]$script:Vault.Config.MinimumRemainingLifetimeSeconds;RemainingLifetimeSeconds=[math]::Floor($remaining);AdmissionAllowed=($remaining -gt $script:Vault.Config.MinimumRemainingLifetimeSeconds)}
 }
 function Get-RunbookCredential {
     <#
@@ -96,19 +102,25 @@ function Get-RunbookCredential {
     [OutputType([Management.Automation.PSCredential])]
     param([string]$Reference='OperationDirectory')
     $a=Get-AccountMapping $Reference
-    $null=Test-RunbookVault $Reference
+    $health=Test-RunbookVault $Reference
+    if(-not $health.AdmissionAllowed){throw 'RUNBOOK_VAULT_ROTATION_ADMISSION_DENIED'}
     $r=$null
     try {
         $r=Invoke-VaultRequest -Endpoint ($script:Vault.Config.Mount+'/static-cred/'+$a.Role)
         if($r.data.username -cne $a.UserName -or $r.data.password -isnot [string] -or [string]::IsNullOrEmpty($r.data.password)){throw 'invalid'}
         $last=[DateTimeOffset]::Parse($r.data.last_vault_rotation).ToUniversalTime()
         Wait-RotationTimestamp $last
-        if([DateTimeOffset]::UtcNow -ge $last.AddSeconds([int]$script:Vault.Config.MaximumPasswordAgeSeconds)){throw 'invalid'}
+        $remaining=($last.AddSeconds([int]$script:Vault.Config.MaximumPasswordAgeSeconds)-[DateTimeOffset]::UtcNow).TotalSeconds
+        # TTL is the provider's next automatic rotation estimate; require both checks.
+        $ttl=$r.data.ttl
+        if(($ttl -isnot [int] -and $ttl -isnot [long] -and $ttl -isnot [double] -and $ttl -isnot [decimal]) -or [double]::IsNaN([double]$ttl) -or [double]::IsInfinity([double]$ttl)){throw 'invalid'}
+        if($remaining -le $script:Vault.Config.MinimumRemainingLifetimeSeconds -or $r.data.ttl -le $script:Vault.Config.MinimumRemainingLifetimeSeconds){throw 'RUNBOOK_VAULT_ROTATION_ADMISSION_DENIED'}
+        if($last -lt [DateTimeOffset]::Parse($health.LastRotationUtc)){throw 'invalid'}
         $secure=[Security.SecureString]::new()
         foreach($character in $r.data.password.ToCharArray()){$secure.AppendChar($character)}
         $secure.MakeReadOnly()
         [pscredential]::new($a.CredentialUserName,$secure)
-    } catch {throw 'RUNBOOK_VAULT_CREDENTIAL_UNAVAILABLE'}
+    } catch {if($_.Exception.Message -eq 'RUNBOOK_VAULT_ROTATION_ADMISSION_DENIED'){throw};throw 'RUNBOOK_VAULT_CREDENTIAL_UNAVAILABLE'}
     finally {$r=$null}
 }
 function Close-RunbookVault {
