@@ -1,0 +1,45 @@
+# Local operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# Local configuration and secrets; keep sanitized *.example files tracked
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.yaml
+*.local.yml
+*.local.psd1
+/secrets/
+/runtime/bootstrap/
+*.key
+*.pfx
+*.p12
+*.jks
+
+# Execution evidence and diagnostics
+/runtime/evidence/
+/runtime/logs/
+*.log
+*.transcript.txt
+
+# Generated artifacts
+artifacts/
+TestResults/
+coverage/
+*.tmp
+*.bak
+
+# Private deployment configuration and certificate material
+/config/local/
+/deployment/openbao/.env
+/deployment/openbao/server.hcl
+/deployment/openbao/tls/
+*.pem
+*.bin

@@ -1,0 +1,23 @@
+name: Validate TSMA
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run full offline checks
+        shell: pwsh
+        run: ./tests/Invoke-TSMAChecks.ps1
+      - name: Analyze PowerShell
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Repository PSGallery -Scope CurrentUser -Force
+          $findings = @(Invoke-ScriptAnalyzer -Path . -Recurse)
+          $findings | Format-Table ScriptName, Line, RuleName, Message -AutoSize
+          if ($findings.Count) { throw 'PSScriptAnalyzer findings require review.' }

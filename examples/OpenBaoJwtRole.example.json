@@ -1,0 +1,22 @@
+{
+  "role_type": "jwt",
+  "user_claim": "oid",
+  "bound_audiences": [
+    "REPLACE_WITH_API_CLIENT_ID"
+  ],
+  "bound_claims_type": "string",
+  "bound_claims": {
+    "tid": "REPLACE_WITH_TENANT_ID",
+    "oid": "REPLACE_WITH_ARC_PRINCIPAL_ID",
+    "roles": "Operation.Directory",
+    "ver": "2.0"
+  },
+  "token_policies": [
+    "operation-directory-worker"
+  ],
+  "token_no_default_policy": true,
+  "token_ttl": "5m",
+  "token_max_ttl": "5m",
+  "token_explicit_max_ttl": "5m",
+  "clock_skew_leeway": 30
+}

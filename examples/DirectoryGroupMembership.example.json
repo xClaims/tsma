@@ -1,0 +1,17 @@
+{
+  "DomainController": "dc01.ad.example.com",
+  "ExcludedOuGuids": [
+    "REPLACE_WITH_TIER0_OU_GUID",
+    "REPLACE_WITH_DOMAIN_CONTROLLERS_OU_GUID"
+  ],
+  "ProtectedObjectGuids": [],
+  "ReviewExpiresUtc": "REPLACE_WITH_REVIEW_EXPIRY_UTC",
+  "WritesEnabled": false,
+  "EvidenceDirectory": "C:\\ProgramData\\TSMA\\Evidence\\GroupMembership",
+  "ScopeReviewReference": "REPLACE_WITH_REVIEW_REFERENCE",
+  "DomainSid": "REPLACE_WITH_DOMAIN_SID",
+  "ExecutionIdentity": "EXAMPLE\\svc-op-directory",
+  "DomainDistinguishedName": "DC=ad,DC=example,DC=com",
+  "Tier0DistinguishedName": "OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com",
+  "MaximumPasswordAgeSeconds": 14400
+}

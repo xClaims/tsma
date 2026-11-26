@@ -1,0 +1,50 @@
+{
+  "Purpose": "Planning worksheet only; not consumed by deployment scripts",
+  "Domain": {
+    "DnsName": "ad.example.com",
+    "NetBiosName": "EXAMPLE",
+    "ControllerFqdn": "dc01.ad.example.com",
+    "DistinguishedName": "DC=ad,DC=example,DC=com",
+    "Tier0DistinguishedName": "OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com"
+  },
+  "Hosts": {
+    "WorkerFqdn": "worker01.ad.example.com",
+    "ArcMachineName": "WORKER01",
+    "VaultFqdn": "bao.example.com",
+    "VaultInterfaceIp": "192.0.2.40",
+    "AdDnsIp": "192.0.2.10"
+  },
+  "Azure": {
+    "TenantId": "REPLACE",
+    "SubscriptionId": "REPLACE",
+    "Location": "westus",
+    "RegionCode": "wus",
+    "ResourceGroup": "rg-operation-directory-prd-wus-001",
+    "AutomationAccount": "aa-operation-directory-prd-wus-001",
+    "WorkerGroup": "hwg-operation-directory-prd-wus-001",
+    "WorkerRegistrationGuid": "GENERATE_ONCE_AND_RECORD",
+    "ArcPrincipalId": "READ_FROM_ARC_RESOURCE"
+  },
+  "Identities": {
+    "ExecutionAccount": "svc-op-directory",
+    "ReconciliationAccount": "svc-pam-rec-dsop",
+    "ApiDisplayName": "api-tsma-vault",
+    "ApiClientId": "RECORD_AFTER_CREATION",
+    "ApiApplicationObjectId": "RECORD_AFTER_CREATION",
+    "ApiServicePrincipalId": "RECORD_AFTER_CREATION",
+    "ApplicationRoleId": "RECORD_AFTER_CREATION"
+  },
+  "Vault": {
+    "Address": "https://bao.example.com:8200",
+    "LdapMount": "ldap-operation",
+    "StaticRole": "operation-directory",
+    "JwtMount": "jwt-arc",
+    "JwtRole": "operation-directory-worker01",
+    "PasswordAgeSeconds": 14400
+  },
+  "Ownership": {
+    "ServiceOwner": "REPLACE_WITH_ACCOUNTABLE_PERSON_OR_TEAM",
+    "CostCenter": "REPLACE_WITH_REAL_CODE",
+    "ScopeReviewReference": "REPLACE_WITH_REVIEW_RECORD"
+  }
+}

@@ -1,0 +1,6 @@
+UserName,DisplayName,AssignedTo,Purpose,SuggestedGroup
+azaut-dir-01,AzAUT Directory Operator 01,Unassigned,Directory runbook operator,sg-operation-directory-operators
+azaut-srv-01,AzAUT Server Operator 01,Unassigned,Member-server runbook operator,sg-operation-server-operators
+azaut-pub-01,AzAUT Runbook Publisher 01,Unassigned,Reviewed runbook release publisher,sg-operation-runbook-publishers
+azaut-adm-01,AzAUT Platform Administrator 01,Unassigned,Automation platform administrator,sg-operation-platform-administrators
+azaut-aud-01,AzAUT Auditor 01,Unassigned,Sanitized automation evidence reader,sg-operation-automation-auditors

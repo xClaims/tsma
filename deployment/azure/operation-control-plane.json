@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "accountName": { "type": "string" },
+    "workerGroupName": { "type": "string" },
+    "location": { "type": "string" },
+    "resourceTags": { "type": "object" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2023-11-01",
+      "name": "[parameters('accountName')]",
+      "location": "[parameters('location')]",
+      "identity": { "type": "SystemAssigned" },
+      "tags": "[parameters('resourceTags')]",
+      "properties": { "sku": { "name": "Basic" } }
+    },
+    {
+      "type": "Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups",
+      "apiVersion": "2023-11-01",
+      "name": "[concat(parameters('accountName'), '/', parameters('workerGroupName'))]",
+      "dependsOn": ["[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"],
+      "properties": {}
+    }
+  ],
+  "outputs": {
+    "automationAccountId": { "type": "string", "value": "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]" },
+    "workerGroupName": { "type": "string", "value": "[parameters('workerGroupName')]" }
+  }
+}
