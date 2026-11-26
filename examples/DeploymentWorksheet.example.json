@@ -40,7 +40,7 @@
     "StaticRole": "operation-directory",
     "JwtMount": "jwt-arc",
     "JwtRole": "operation-directory-worker01",
-    "PasswordAgeSeconds": 14400
+    "PasswordAgeSeconds": 86400
   },
   "Ownership": {
     "ServiceOwner": "REPLACE_WITH_ACCOUNTABLE_PERSON_OR_TEAM",

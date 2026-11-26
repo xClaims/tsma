@@ -17,8 +17,8 @@ try {
         function script:Invoke-VaultRequest {
             param($Endpoint)
             $last=[DateTimeOffset]::UtcNow.AddMinutes(-1).ToString('o')
-            if($Endpoint -like '*/static-role/*'){return @{data=@{username='svc-op-directory';dn='CN=svc-op-directory,OU=Service Accounts,OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com';rotation_period=14400;last_vault_rotation=$last}}}
-            if($Endpoint -like '*/static-cred/*'){return @{data=@{username='svc-op-directory';password='OFFLINE-FAKE';last_vault_rotation=$last}}}
+            if($Endpoint -like '*/static-role/*'){return @{data=@{username='svc-op-directory';dn='CN=svc-op-directory,OU=Service Accounts,OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com';rotation_period=86400;last_vault_rotation=$last}}}
+            if($Endpoint -like '*/static-cred/*'){return @{data=@{username='svc-op-directory';ttl=86340;password='OFFLINE-FAKE';last_vault_rotation=$last}}}
             throw 'Unexpected fixture request'
         }
     }

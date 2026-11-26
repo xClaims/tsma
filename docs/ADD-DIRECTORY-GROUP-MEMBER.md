@@ -17,9 +17,9 @@ Inputs:
 
 ## Prerequisites
 
-Complete [installation](INSTALL.md), delegated AD rights, exact vault mapping, trusted LDAPS and scope inventory. Confirm policy ExecutionIdentity equals the mapped credential identity and MaximumPasswordAgeSeconds matches the vault configuration/role. Do not give the execution account rights to protected objects merely because code also checks exclusions.
+Complete [installation](INSTALL.md), delegated AD rights, exact vault mapping, trusted LDAPS and scope inventory. Confirm policy ExecutionIdentity equals the mapped credential identity and MaximumPasswordAgeSeconds matches the vault configuration/role and MinimumRemainingLifetimeSeconds matches the vault mapping (default 2100). See [rotation safeguards](CREDENTIAL-ROTATION.md). Do not give the execution account rights to protected objects merely because code also checks exclusions.
 
-The protected policy at C:\ProgramData\TSMA\Config\DirectoryGroupMembership.json includes DomainController, DomainSid, DomainDistinguishedName, Tier0DistinguishedName, ExcludedOuGuids, ProtectedObjectGuids, ExecutionIdentity, MaximumPasswordAgeSeconds, ScopeReviewReference, ReviewExpiresUtc, WritesEnabled and EvidenceDirectory. Examples contain placeholders, not an operational policy.
+The protected policy at C:\ProgramData\TSMA\Config\DirectoryGroupMembership.json includes DomainController, DomainSid, DomainDistinguishedName, Tier0DistinguishedName, ExcludedOuGuids, ProtectedObjectGuids, ExecutionIdentity, MaximumPasswordAgeSeconds, MinimumRemainingLifetimeSeconds, ScopeReviewReference, ReviewExpiresUtc, WritesEnabled and EvidenceDirectory. Examples contain placeholders, not an operational policy.
 
 ## Procedure
 

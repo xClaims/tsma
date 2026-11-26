@@ -17,14 +17,14 @@ try {
     '{"Provider":"Untrusted","ModulePath":"untrusted.ps1"}' | Set-Content -LiteralPath $fixture
     try {Initialize-RunbookVault -ConfigurationPath $fixture;throw 'Expected provider refusal'}catch{if($_.Exception.Message -ne 'RUNBOOK_VAULT_CONFIG_INVALID'){throw};$checks++}
     $fake=New-Module -Name ContractFakeProvider -ScriptBlock {
-        function Test-RunbookVault {param($Reference) [pscustomobject]@{Reference=$Reference;Healthy=$true;LastRotationUtc=[DateTimeOffset]::UtcNow.ToString('o');PasswordAgeLimitSeconds=14400}}
+        function Test-RunbookVault {param($Reference) [pscustomobject]@{Reference=$Reference;Healthy=$true;LastRotationUtc=[DateTimeOffset]::UtcNow.ToString('o');PasswordAgeLimitSeconds=86400}}
         function Get-RunbookCredential {param($Reference) if($Reference -ne 'OperationDirectory'){throw 'RUNBOOK_VAULT_REFERENCE_DENIED'};$secret=New-Object Security.SecureString;$secret.AppendChar('x');[pscredential]::new('EXAMPLE\svc-op-directory',$secret)}
         function Close-RunbookVault {}
         Export-ModuleMember -Function @()
     }
     & $module {param($Provider) $script:ProviderModule=$Provider} $fake
     $health=Test-RunbookVault -Reference OperationDirectory
-    if(-not $health.Healthy -or $health.Reference -ne 'OperationDirectory' -or $health.PasswordAgeLimitSeconds -ne 14400){throw 'Health dispatch failed'};$checks++
+    if(-not $health.Healthy -or $health.Reference -ne 'OperationDirectory' -or $health.PasswordAgeLimitSeconds -ne 86400){throw 'Health dispatch failed'};$checks++
     $credential=Get-RunbookCredential -Reference OperationDirectory
     if($credential -isnot [pscredential] -or $credential.UserName -ne 'EXAMPLE\svc-op-directory'){throw 'Credential dispatch failed'};$credential.Password.Dispose();$checks++
     try {Get-RunbookCredential -Reference Schema;throw 'Expected reference refusal'}catch{if($_.Exception.Message -ne 'RUNBOOK_VAULT_REFERENCE_DENIED'){throw};$checks++}

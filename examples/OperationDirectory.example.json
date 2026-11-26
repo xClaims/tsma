@@ -4,7 +4,7 @@
   "AuthMount": "jwt-arc",
   "Mount": "ldap-operation",
   "TimeoutSeconds": 15,
-  "MaximumPasswordAgeSeconds": 14400,
+  "MaximumPasswordAgeSeconds": 86400,
   "Accounts": {
     "OperationDirectory": {
       "Role": "operation-directory",
@@ -15,5 +15,6 @@
   },
   "Authentication": "ArcManagedIdentity",
   "JwtRole": "operation-directory-worker01",
-  "ManagedIdentityResource": "api://11111111-1111-4111-8111-111111111111"
+  "ManagedIdentityResource": "api://11111111-1111-4111-8111-111111111111",
+  "MinimumRemainingLifetimeSeconds": 2100
 }

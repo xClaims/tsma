@@ -13,5 +13,6 @@
   "ExecutionIdentity": "EXAMPLE\\svc-op-directory",
   "DomainDistinguishedName": "DC=ad,DC=example,DC=com",
   "Tier0DistinguishedName": "OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com",
-  "MaximumPasswordAgeSeconds": 14400
+  "MaximumPasswordAgeSeconds": 86400,
+  "MinimumRemainingLifetimeSeconds": 2100
 }

@@ -53,7 +53,7 @@ Expect protected ACLs with SYSTEM and local Administrators only. Existing live c
 Use your actual DC, Tier 0 DN, execution account and scope review reference. The review is an accountable approval of directory scope/protected inventory, not a claim to validate a ticket-system approval automatically.
 
 ~~~powershell
-.\deployment\azure\Initialize-DirectoryGroupMembership.ps1 -DomainController dc01.ad.example.com -Tier0DistinguishedName 'OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com' -ExecutionAccount svc-op-directory -ScopeReviewReference CHG-YOUR-REVIEW -ReviewDays 7 -MaximumPasswordAgeSeconds 14400 -WritesEnabled $false -WhatIf
+.\deployment\azure\Initialize-DirectoryGroupMembership.ps1 -DomainController dc01.ad.example.com -Tier0DistinguishedName 'OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com' -ExecutionAccount svc-op-directory -ScopeReviewReference CHG-YOUR-REVIEW -ReviewDays 7 -MaximumPasswordAgeSeconds 86400 -MinimumRemainingLifetimeSeconds 2100 -WritesEnabled $false -WhatIf
 ~~~
 
 Replace example values; review then run the same command without WhatIf. The script resolves real domain/account/OU identities, creates a protected DirectoryGroupMembership.json, evidence directory and TSMA Application event source. It grants no AD permission. Include AdditionalProtectedObjectGuids for reviewed powerful identities/application groups outside excluded roots.
@@ -62,7 +62,7 @@ Verify the resulting fields:
 
 ~~~powershell
 $policy=Get-Content C:\ProgramData\TSMA\Config\DirectoryGroupMembership.json -Raw | ConvertFrom-Json
-$policy | Select-Object DomainController,DomainDistinguishedName,Tier0DistinguishedName,ExecutionIdentity,MaximumPasswordAgeSeconds,ReviewExpiresUtc,WritesEnabled
+$policy | Select-Object DomainController,DomainDistinguishedName,Tier0DistinguishedName,ExecutionIdentity,MaximumPasswordAgeSeconds,MinimumRemainingLifetimeSeconds,ReviewExpiresUtc,WritesEnabled
 Get-Acl C:\ProgramData\TSMA\Config\DirectoryGroupMembership.json | Format-List AreAccessRulesProtected,AccessToString
 ~~~
 
@@ -101,3 +101,5 @@ $start=[DateTimeOffset]::UtcNow.AddMinutes(15)
 ~~~
 
 Review then apply without WhatIf. Confirm the published Get-WindowsServiceHealth job completes on schedule, with the expected Run on group. This is not a schedule for privileged writes or credential rotation. Monitor costs and remove/expire unneeded schedules under normal administration.
+
+For an existing deployment, follow [24-hour rotation migration](CREDENTIAL-ROTATION.md) rather than editing one interval in isolation. The vault role, vault mapping and directory policy must agree.

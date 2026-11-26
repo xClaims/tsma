@@ -21,7 +21,7 @@ try {
     $module=Import-Module (Join-Path $base 'src/vaults/openbao/OpenBao.psm1') -Force -PassThru
     Initialize-RunbookVault $fixture
     & $module {
-        $script:FixtureState=@{Last=[DateTimeOffset]::UtcNow.AddMinutes(-1);User='svc-op-directory';Period=14400;Fail=$false;Root=$false}
+        $script:FixtureState=@{Last=[DateTimeOffset]::UtcNow.AddMinutes(-1);User='svc-op-directory';Period=86400;Fail=$false;Root=$false}
         function script:Get-ArcIdentityToken {'TEST-IDENTITY-TOKEN'}
         function script:Invoke-RestMethod {
             param($Uri,$Method,$Headers,$TimeoutSec,$MaximumRedirection,$Body,$ContentType,$ErrorAction,$Verbose,$Debug)
@@ -36,7 +36,7 @@ try {
             }
             if($Headers['X-Vault-Token'] -ne 'TEST-TOKEN'){throw 'No auth'}
             if($Uri -like '*/static-role/operation-directory'){return @{data=@{username=$script:FixtureState.User;dn='CN=svc-op-directory,OU=Service Accounts,OU=Tier 0,OU=Admin,DC=ad,DC=example,DC=com';rotation_period=$script:FixtureState.Period;last_vault_rotation=$script:FixtureState.Last.ToString('o')}}}
-            if($Uri -like '*/static-cred/operation-directory'){return @{data=@{username=$script:FixtureState.User;password='TEST-PASSWORD';last_vault_rotation=$script:FixtureState.Last.ToString('o')}}}
+            if($Uri -like '*/static-cred/operation-directory'){return @{data=@{username=$script:FixtureState.User;ttl=86340;password='TEST-PASSWORD';last_vault_rotation=$script:FixtureState.Last.ToString('o')}}}
             throw 'Unexpected endpoint'
         }
     }
@@ -45,7 +45,7 @@ try {
     Assert-Check ($cred -is [pscredential] -and $cred.UserName -eq 'EXAMPLE\svc-op-directory') 'Credential mapping'
     $cred=$null
     Assert-Denied {Get-RunbookCredential -Reference '../Schema'} 'RUNBOOK_VAULT_REFERENCE_DENIED'
-    & $module {$script:FixtureState.Last=[DateTimeOffset]::UtcNow.AddHours(-4)}
+    & $module {$script:FixtureState.Last=[DateTimeOffset]::UtcNow.AddHours(-24)}
     Assert-Denied {Get-RunbookCredential} 'RUNBOOK_VAULT_ROTATION_OVERDUE'
     & $module {$script:FixtureState.Last=[DateTimeOffset]::UtcNow.AddMinutes(5)}
     Assert-Denied {Test-RunbookVault} 'RUNBOOK_VAULT_CLOCK_AHEAD'
@@ -53,9 +53,9 @@ try {
     Assert-Check (Test-RunbookVault).Healthy 'Small skew waited out'
     & $module {$script:FixtureState.User='wrong'}
     Assert-Denied {Test-RunbookVault} 'RUNBOOK_VAULT_METADATA_INVALID'
-    & $module {$script:FixtureState.User='svc-op-directory';$script:FixtureState.Period=86400}
+    & $module {$script:FixtureState.User='svc-op-directory';$script:FixtureState.Period=14400}
     Assert-Denied {Test-RunbookVault} 'RUNBOOK_VAULT_METADATA_INVALID'
-    & $module {$script:FixtureState.Period=14400;$script:FixtureState.Fail=$true}
+    & $module {$script:FixtureState.Period=86400;$script:FixtureState.Fail=$true}
     Assert-Denied {Test-RunbookVault} 'RUNBOOK_VAULT_REQUEST_FAILED_transport'
     & $module {$script:FixtureState.Fail=$false;$script:FixtureState.Root=$true;$script:Vault.Token=$null}
     Assert-Denied {Test-RunbookVault} 'RUNBOOK_VAULT_REQUEST_FAILED_transport'

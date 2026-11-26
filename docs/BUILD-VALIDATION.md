@@ -2,10 +2,11 @@
 
 ## Recorded offline validation
 
-Package validation was performed on 2026-11-25:
+Package validation was performed on 2026-11-26:
 
-- All 16 offline test scripts passed in PowerShell 7.4.22.
+- All 18 offline test scripts passed in PowerShell 7.4.22.
 - Ownership regression coverage rejects unsafe pre-existing runtime owners, ACLs and links before installation writes.
+- Rotation coverage checks the 24-hour interval, admission blackout, response TTL, fresh phase retrieval and maintenance preflight/WhatIf. Live vault rotation and protected atomic file replacement still require deployment acceptance.
 - PSScriptAnalyzer 1.25.0 reported zero findings.
 - PowerShell source/JSON parsing, relative Markdown links and fenced PowerShell examples passed.
 - Actual credential-facade/provider loading and dispatch were exercised with mocked provider transport.
